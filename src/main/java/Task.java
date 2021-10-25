@@ -13,6 +13,11 @@ public class Task {
         return id;
     }
 
+    public boolean checkId(int num) {
+        return id == num;
+    }
+
+
     public boolean getDone() {
         return done;
     }
@@ -22,10 +27,17 @@ public class Task {
     }
 
     public void setDescription(String newDescription) {
+
         description = newDescription;
     }
 
+    public boolean checkDescription(String substring) {
+        return description.contains(substring);
+    }
+
     public String getDescription() {
+
         return description;
     }
+
 }
