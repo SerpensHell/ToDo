@@ -17,7 +17,6 @@ public class Task {
         return id == num;
     }
 
-
     public boolean getDone() {
         return done;
     }
@@ -39,5 +38,4 @@ public class Task {
 
         return description;
     }
-
 }

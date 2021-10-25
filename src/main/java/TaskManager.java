@@ -16,8 +16,6 @@ public class TaskManager {
     private final static String SEARCH = "search";
     private final static String QUIT = "quit";
 
-
-
     private void setCommandAndDescription(String userInput) {
         int i = userInput.indexOf(' ');
         if (i > -1) {
@@ -68,7 +66,6 @@ public class TaskManager {
         }
         return index;
     }
-
 
     private void toggleTasks() {
         try {
