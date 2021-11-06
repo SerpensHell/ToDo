@@ -1,13 +1,17 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class TaskManager {
-    private ArrayList<Task> tasks;
+    private Map<String,Task> tasks;
     private String command;
     private String description;
-    private int id;
+    private static int counter = 0;
     private final static String ADD = "add";
     private final static String PRINT = "print";
     private final static String TOGGLE = "toggle";
@@ -28,129 +32,73 @@ public class TaskManager {
     }
 
     private void addTask() {
-
         if (description.equals("")) {
             System.out.println("Отсутствует описание задачи");
             return;
         }
-        if (tasks.isEmpty()) {
-            tasks.add(0, new Task(1, description));
-        } else {
-            tasks.add(new Task(tasks.get(tasks.size() - 1).getId() + 1, description));
-        }
+        counter++;
+        tasks.put(String.valueOf(counter),new Task(description));
     }
 
-    private void printTasks() {
-        if (tasks.isEmpty()) {
-            System.out.println("Список задач пуст");
-        } else {
-            if (!description.equals("all") && !description.equals("")) {
-                System.out.println("Недопустимый аргумент команды print");
-                return;
-            }
-            for (Task task : tasks) {
-                if (description.equals("") && !task.getDone() || description.equals("all")) {
-                    System.out.printf("%d. [%s] %s\n", task.getId(), task.getDone() ? "x" : " ", task.getDescription());
-                }
-            }
-        }
-    }
+   private static void printTask(Map.Entry<String, Task> tasks) {
+       System.out.printf("%s. [%s] %s\n",tasks.getKey(), tasks.getValue().isDone() ? "x" : " ", tasks.getValue().getDescription());
+   }
 
-    private int searchIndexById(int num) {
-        int index = -1;
-        for (int i = 0; i < tasks.size(); i++) {
-            if (tasks.get(i).checkId(num)) {
-                index = i;
-                return index;
-            }
-        }
-        return index;
-    }
+   private void printTasks() {
+       if (tasks.isEmpty()) {
+           System.out.println("Список задач пуст");
+       } else {
+           if (description.equals("all") || description.equals("")) {
+               Stream<Map.Entry<String, Task>> stream = tasks.entrySet().stream();
+               if(!description.equals("all")) {
+                   stream = stream.filter(s -> !s.getValue().isDone());
+               }
+               stream.forEach(TaskManager::printTask);
+           }
+       }
+   }
 
     private void toggleTasks() {
-        try {
             if (tasks.isEmpty()) {
                 System.out.println("Список задач пуст");
             } else {
-                int num = Integer.parseInt(description);
-                if (num > 0) {
-                    int index = searchIndexById(num);
-                    if (index != -1) {
-                        tasks.get(index).setDone(!tasks.get(index).getDone());
-                    }
-                    else {
-                        System.out.println("Введеный идентификатор задачи в команде toggle не существует");
-                    }
+                if (tasks.containsKey(description)) {
+                   tasks.get(description).setDone(!tasks.get(description).isDone());
                 } else {
-                    System.out.println("Введеный идентификатор <= 0");
+                    System.out.println("Введеный идентификатор задачи в команде toggle не существует");
                 }
             }
-        } catch (NumberFormatException e) {
-            System.out.println("Введен неверный идентификатор задачи в команде toggle");
-        }
     }
 
     private void deleteTask() {
-        try {
             if (tasks.isEmpty()) {
                 System.out.println("Список задач пуст");
             } else {
-                int num = Integer.parseInt(description);
-                if (num > 0) {
-                    int index = searchIndexById(num);
-                    if (index != -1) {
-                        tasks.remove(index);
-                    }
-                    else {
-                        System.out.println("Введеный идентификатор задачи в команде delete не существует");
-                    }
+                if (tasks.containsKey(description)) {
+                    tasks.remove(description);
                 } else {
-                    System.out.println("Введеный идентификатор <= 0");
+                    System.out.println("Введеный идентификатор задачи в команде delete не существует");
                 }
             }
-        } catch (NumberFormatException e) {
-            System.out.println("Введен неверный идентификатор задачи в команде delete");
-        }
-    }
-
-    private void setIdAndDescription() {
-        if (description.equals("")) {
-            System.out.println("Отсутствует описание команды edit");
-            return;
-        }
-        int i = description.indexOf(' ');
-        if (i > -1) {
-            id =Integer.parseInt(description.substring(0, i));
-            description = description.substring(i + 1);
-        } else {
-            System.out.println("Введен неверный формат команды edit");
-            id = Integer.MIN_VALUE;
-        }
     }
 
     private void editTaskDescription() {
-        try {
-            setIdAndDescription();
-            if (id == Integer.MIN_VALUE) {
-                return;
-            }
-            if (tasks.isEmpty()) {
-                System.out.println("Список задач пуст");
-            } else {
-                if (id > 0) {
-                    int index = searchIndexById(id);
-                    if (index != -1) {
-                        tasks.get(index).setDescription(description);
-                    }
-                    else {
-                        System.out.println("Введеный идентификатор задачи в команде edit не существует");
-                    }
+        if (tasks.isEmpty()) {
+            System.out.println("Список задач пуст");
+        } else {
+            Pattern pattern = Pattern.compile("^(\\d+)\\s+(\\S+.*)$");
+            Matcher matcher = pattern.matcher(description);
+            if (matcher.find()) {
+                String id = matcher.group(1);
+                String newDescription = matcher.group(2);
+                if (tasks.containsKey(id)) {
+                    tasks.get(id).setDescription(newDescription);
                 } else {
-                    System.out.println("Введеный идентификатор <= 0");
+                    System.out.println("Введеный идентификатор задачи в команде edit не существует");
                 }
+            } else {
+                System.out.println("Неверный формат команды edit");
             }
-        } catch (NumberFormatException e) {
-            System.out.println("Введен неверный идентификатор задачи в команде edit");
         }
     }
 
@@ -159,17 +107,15 @@ public class TaskManager {
             System.out.println("Список задач пуст");
             return;
         }
-        for (Task task : tasks){
-            if(task.checkDescription(description)){
-                System.out.printf("%d. [%s] %s\n", task.getId(), task.getDone() ? "x" : " ", task.getDescription());
-            }
-        }
+        Stream<Map.Entry<String, Task>> stream = tasks.entrySet().stream();
+        stream = stream.filter(s -> s.getValue().checkDescription(description));
+        stream.forEach(TaskManager::printTask);
     }
 
     public void work() throws IOException {
         String userInput;
         boolean working = true;
-        tasks = new ArrayList<>();
+        tasks = new LinkedHashMap<>();
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         while(working) {
             userInput = reader.readLine();
