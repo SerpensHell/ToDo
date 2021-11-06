@@ -12,5 +12,4 @@ public class Task {
     public boolean checkDescription(String substring) {
         return description.contains(substring);
     }
-
 }
